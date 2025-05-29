@@ -3,8 +3,6 @@ services:
     build: web
     image: smithmicro/n7m-web
     restart: always
-    ports:
-      - "8080:80"
     depends_on:
       - api
       - ui
@@ -19,7 +17,6 @@ services:
     image: smithmicro/n7m-api
     restart: always
     environment:
-      - PGPASSWORD=n7m-geocoding
       - WEB_CONCURRENCY=2
     depends_on:
       - gis
@@ -30,20 +27,24 @@ services:
     depends_on:
       - gis
     environment:
-      - PGPASSWORD=n7m-geocoding
-      - OSM_FILENAME=monaco-latest.osm.pbf
-      - NOMINATIM_REPLICATION_URL=https://download.geofabrik.de/europe/monaco-updates
+      - OSM_FILENAME=planet-latest.osm.pbf
+      - NOMINATIM_REPLICATION_URL=https://planet.openstreetmap.org/replication/day/
       - NOMINATIM_REPLICATION_MAX_DIFF=3000
       - NOMINATIM_REPLICATION_UPDATE_INTERVAL=86400
     volumes:
-      - ./data:/data/
+      - n7m_feed_data:/data/
   gis:
     build: gis
     image: smithmicro/n7m-gis
     restart: always
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_PASSWORD=n7m-geocoding
     volumes:
-      - ./pgdata:/var/lib/postgresql/data
+      - n7m_pg_data:/var/lib/postgresql/data
+  bastion:
+    image: debian:bookworm
+    volumes:
+      - n7m_feed_data:/data/
+volumes:
+  n7m_pg_data:
+      external: false
+  n7m_feed_data:
+    external: false
